@@ -1,8 +1,6 @@
-name: TemplatePlugin
-author: Maxlego08
+name: WindBurstSword
 main: fr.maxlego08.template.Template
-website: https://groupez.dev
-description: Default plugin developed by GroupeZ
 version: 1.0.0
-api-version: 1.13
-commands:
+api-version: '1.21'
+author: Leyanshi
+description: 在剑上实现 1.21 风爆与猛击机制

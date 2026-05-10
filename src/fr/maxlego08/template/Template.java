@@ -1,45 +1,25 @@
 package fr.maxlego08.template;
 
-import fr.maxlego08.template.command.commands.CommandTemplate;
-import fr.maxlego08.template.placeholder.LocalPlaceholder;
-import fr.maxlego08.template.save.Config;
-import fr.maxlego08.template.save.MessageLoader;
-import fr.maxlego08.template.zcore.ZPlugin;
+import fr.maxlego08.template.listener.SwordSmashListener;
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.java.JavaPlugin;
 
 /**
- * System to create your plugins very simply Projet:
- * <a href="https://github.com/Maxlego08/TemplatePlugin">https://github.com/Maxlego08/TemplatePlugin</a>
+ * WindBurstSword 插件主类。
  *
- * @author Maxlego08
+ * <p>本次精简后仅保留基础插件入口（main class）并注册核心监听器，
+ * 移除了模板工程中与本需求无关的命令系统、占位符系统、GUI、存储等功能。</p>
  */
-public class Template extends ZPlugin {
+public final class Template extends JavaPlugin {
 
     @Override
     public void onEnable() {
-
-        LocalPlaceholder placeholder = LocalPlaceholder.getInstance();
-        placeholder.setPrefix("template");
-
-        this.preEnable();
-
-        this.registerCommand("template", new CommandTemplate(this));
-
-        this.addSave(Config.getInstance());
-        this.addSave(new MessageLoader(this));
-
-        this.loadFiles();
-
-        this.postEnable();
+        Bukkit.getPluginManager().registerEvents(new SwordSmashListener(this), this);
+        getLogger().info("WindBurstSword 已启用（Paper 1.21）");
     }
 
     @Override
     public void onDisable() {
-
-        this.preDisable();
-
-        this.saveFiles();
-
-        this.postDisable();
+        getLogger().info("WindBurstSword 已关闭");
     }
-
 }
