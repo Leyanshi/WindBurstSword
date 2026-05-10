@@ -1,0 +1,65 @@
+name: Build Maven Project and Release JAR
+
+# 触发条件：push 到任意分支（如需限定分支，可改为 branches: [main, master]）
+on:
+  push:
+    branches: ['*']
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 授予发布 Release 的权限
+
+    steps:
+      # 1. 拉取仓库代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. 配置 JDK 环境（根据你的项目需求调整版本，如 17、21）
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven  # 缓存 Maven 依赖，加速构建
+
+      # 3. 编译项目生成 JAR 文件
+      - name: Build with Maven
+        run: mvn clean package  # clean 清空旧构建产物，package 执行编译打包
+
+      # 4. 生成 YYYYMMDDHHMMSS 格式的版本号
+      - name: Generate release version (YYYYMMDDHHMMSS)
+        id: generate_version
+        run: echo "VERSION=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+
+      # 5. 查找生成的 JAR 文件（处理不同 Maven 项目可能的不同输出路径）
+      - name: Find JAR file
+        id: find_jar
+        run: |
+          # 首先尝试 target 目录（标准 Maven 输出）
+          if [ -d "target" ] && [ -n "$(ls target/*.jar 2>/dev/null)" ]; then
+            echo "JAR_PATH=target/*.jar" >> $GITHUB_ENV
+            echo "找到 JAR 文件在 target 目录"
+          # 如果有多模块项目，尝试在各模块的 target 目录查找
+          elif [ -n "$(find . -path "*/target/*.jar" -type f 2>/dev/null | head -1)" ]; then
+            echo "JAR_PATH=$(find . -path "*/target/*.jar" -type f | head -1)" >> $GITHUB_ENV
+            echo "找到 JAR 文件在多模块项目的 target 目录"
+          else
+            echo "未找到 JAR 文件，请检查构建输出"
+            exit 1
+          fi
+
+      # 6. 发布 Release 并上传 JAR 文件
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # Release 标签和名称均使用 YYYYMMDDHHMMSS 格式
+          tag_name: dev_branch${{ env.VERSION }}
+          name: Developmental Version ${{ env.VERSION }}
+          # 上传找到的 JAR 文件
+          files: ${{ env.JAR_PATH }}
+          # 可选：是否为预发布版本（true 为预发布）
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub 自动生成的令牌，无需手动配置
